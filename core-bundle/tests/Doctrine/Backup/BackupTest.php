@@ -84,6 +84,6 @@ class BackupTest extends ContaoTestCase
 
     private function getValidBackupPath(): string
     {
-        return Path::join($this->getTempDir(), '/valid_backup_filename__20211101141254.sql');
+        return Path::join($this->getTempDir(), 'valid_backup_filename__20211101141254.sql');
     }
 }
