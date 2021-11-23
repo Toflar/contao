@@ -16,6 +16,7 @@ use Contao\CoreBundle\Command\Backup\BackupListCommand;
 use Contao\CoreBundle\Doctrine\Backup\Backup;
 use Contao\CoreBundle\Doctrine\Backup\BackupManager;
 use Contao\CoreBundle\Tests\TestCase;
+use PHPUnit\Framework\MockObject\MockObject;
 use Symfony\Component\Console\Tester\CommandTester;
 
 class BackupListCommandTest extends TestCase
@@ -25,7 +26,7 @@ class BackupListCommandTest extends TestCase
      */
     public function testSuccessfulCommandRun(array $arguments, string $expectedOutput): void
     {
-        $command = new BackupListCommand($this->createBackupManager());
+        $command = new BackupListCommand($this->mockBackupManager());
 
         $commandTester = new CommandTester($command);
         $code = $commandTester->execute($arguments);
@@ -56,15 +57,18 @@ class BackupListCommandTest extends TestCase
         ];
     }
 
-    private function createBackupManager(): BackupManager
+    /**
+     * @return BackupManager&MockObject
+     */
+    private function mockBackupManager(): BackupManager
     {
+        $backups = [
+            $this->mockBackup('test__20211101141254.sql.gz', 50000),
+            $this->mockBackup('test2__20211031141254.sql.gz', 6005000),
+            $this->mockBackup('test3__20211102141254.sql.gz', 2764922),
+        ];
+
         $backupManager = $this->createMock(BackupManager::class);
-
-        $backups = [];
-        $backups[] = $this->createBackup('test__20211101141254.sql.gz', 50000);
-        $backups[] = $this->createBackup('test2__20211031141254.sql.gz', 6005000);
-        $backups[] = $this->createBackup('test3__20211102141254.sql.gz', 2764922);
-
         $backupManager
             ->expects($this->once())
             ->method('listBackups')
@@ -74,12 +78,17 @@ class BackupListCommandTest extends TestCase
         return $backupManager;
     }
 
-    private function createBackup(string $filepath, int $size): Backup
+    /**
+     * @return Backup&MockObject
+     */
+    private function mockBackup(string $filepath, int $size): Backup
     {
-        $backup = $this->getMockBuilder(Backup::class)
+        $backup = $this
+            ->getMockBuilder(Backup::class)
             ->setConstructorArgs([$filepath])
             ->onlyMethods(['getSize'])
         ;
+
         $backup = $backup->getMock();
         $backup
             ->method('getSize')

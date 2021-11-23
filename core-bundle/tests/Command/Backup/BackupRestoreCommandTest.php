@@ -18,6 +18,7 @@ use Contao\CoreBundle\Doctrine\Backup\BackupManager;
 use Contao\CoreBundle\Doctrine\Backup\BackupManagerException;
 use Contao\CoreBundle\Doctrine\Backup\Config\RestoreConfig;
 use Contao\CoreBundle\Tests\TestCase;
+use PHPUnit\Framework\MockObject\MockObject;
 use Symfony\Component\Console\Tester\CommandTester;
 
 class BackupRestoreCommandTest extends TestCase
@@ -27,7 +28,7 @@ class BackupRestoreCommandTest extends TestCase
      */
     public function testSuccessfulCommandRun(array $arguments, \Closure $expectedRestoreConfig, string $expectedOutput): void
     {
-        $command = new BackupRestoreCommand($this->createBackupManager($expectedRestoreConfig));
+        $command = new BackupRestoreCommand($this->mockBackupManager($expectedRestoreConfig));
 
         $commandTester = new CommandTester($command);
         $code = $commandTester->execute($arguments);
@@ -134,20 +135,23 @@ class BackupRestoreCommandTest extends TestCase
         ];
     }
 
-    private function createBackupManager(\Closure $expectedCreateConfig): BackupManager
+    /**
+     * @return BackupManager&MockObject
+     */
+    private function mockBackupManager(\Closure $expectedCreateConfig): BackupManager
     {
-        $backupManager = $this->createMock(BackupManager::class);
-
         $backup = $this->getMockBuilder(Backup::class)
             ->setConstructorArgs(['test__20211101141254.sql.gz'])
             ->onlyMethods(['getSize'])
         ;
+
         $backup = $backup->getMock();
         $backup
             ->method('getSize')
             ->willReturn(100)
         ;
 
+        $backupManager = $this->createMock(BackupManager::class);
         $backupManager
             ->expects($this->once())
             ->method('createRestoreConfig')

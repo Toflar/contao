@@ -41,18 +41,21 @@ class BackupTest extends ContaoTestCase
         $this->assertSame($this->getValidBackupPath(), $backup->getFilepath());
         $this->assertSame('2021-11-01T14:12:54+0000', $backup->getCreatedAt()->format(\DateTimeInterface::ISO8601));
         $this->assertSame(6, $backup->getSize());
-        $this->assertSame([
-            'createdAt' => '2021-11-01T14:12:54+0000',
-            'size' => 6,
-            'path' => $this->getValidBackupPath(),
-        ], $backup->toArray());
+
+        $this->assertSame(
+            [
+                'createdAt' => '2021-11-01T14:12:54+0000',
+                'size' => 6,
+                'path' => $this->getValidBackupPath(),
+            ],
+            $backup->toArray()
+        );
     }
 
     public function testCreateNewAtPath(): void
     {
         $backup = Backup::createNewAtPath($this->getTempDir());
 
-        $this->assertInstanceOf(\DateTimeInterface::class, $backup->getCreatedAt());
         $this->assertSame(0, $backup->getSize());
 
         (new Filesystem())->remove($backup->getFilepath());
@@ -64,6 +67,7 @@ class BackupTest extends ContaoTestCase
     public function testInvalidFileName(string $filepath): void
     {
         $this->expectException(BackupManagerException::class);
+
         $this->expectExceptionMessage(sprintf(
             'The filepath "%s" does not match "%s"',
             $filepath,
