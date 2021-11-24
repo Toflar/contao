@@ -146,9 +146,9 @@ services:
         arguments:
             - '@database_connection'
             - '@contao.doctrine.backup.dumper'
-            - '%kernel.project_dir%/var/backups'
-            - [tl_crawl_queue, tl_log, tl_search, tl_search_index, tl_search_term]
-            - 5
+            - ~
+            - ~
+            - ~
 
     contao.doctrine.dca_schema_provider:
         class: Contao\CoreBundle\Doctrine\Schema\DcaSchemaProvider
