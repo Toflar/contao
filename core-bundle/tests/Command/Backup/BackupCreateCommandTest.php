@@ -81,7 +81,7 @@ class BackupCreateCommandTest extends TestCase
 
                 return true;
             },
-            '{"createdAt":"2021-11-01T14:12:54+0000","size":100,"path":"test__20211101141254.sql.gz"}',
+            '{"createdAt":"2021-11-01T14:12:54+00:00","size":100,"path":"test__20211101141254.sql.gz"}',
         ];
     }
 

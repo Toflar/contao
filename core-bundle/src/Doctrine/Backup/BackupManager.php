@@ -157,7 +157,7 @@ class BackupManager
 
         // Header lines
         $this->writeLine(self::DUMP_HEADER, $fileHandle, $deflateContext);
-        $this->writeLine('-- Generated at '.$config->getBackup()->getCreatedAt()->format(\DateTimeInterface::ISO8601), $fileHandle, $deflateContext);
+        $this->writeLine('-- Generated at '.$config->getBackup()->getCreatedAt()->format(\DateTimeInterface::ATOM), $fileHandle, $deflateContext);
 
         try {
             foreach ($this->dumper->dump($this->connection, $config) as $data) {

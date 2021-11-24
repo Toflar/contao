@@ -53,7 +53,7 @@ class BackupListCommandTest extends TestCase
 
         yield 'JSON format' => [
             ['--format' => 'json'],
-            '[{"createdAt":"2021-11-01T14:12:54+0000","size":50000,"path":"test__20211101141254.sql.gz"},{"createdAt":"2021-10-31T14:12:54+0000","size":6005000,"path":"test2__20211031141254.sql.gz"},{"createdAt":"2021-11-02T14:12:54+0000","size":2764922,"path":"test3__20211102141254.sql.gz"}]',
+            '[{"createdAt":"2021-11-01T14:12:54+00:00","size":50000,"path":"test__20211101141254.sql.gz"},{"createdAt":"2021-10-31T14:12:54+00:00","size":6005000,"path":"test2__20211031141254.sql.gz"},{"createdAt":"2021-11-02T14:12:54+00:00","size":2764922,"path":"test3__20211102141254.sql.gz"}]',
         ];
     }
 

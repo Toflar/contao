@@ -67,7 +67,7 @@ class Backup
     public function toArray(): array
     {
         return [
-            'createdAt' => $this->getCreatedAt()->format(\DateTimeInterface::ISO8601),
+            'createdAt' => $this->getCreatedAt()->format(\DateTimeInterface::ATOM),
             'size' => $this->getSize(),
             'path' => $this->getFilepath(),
         ];
