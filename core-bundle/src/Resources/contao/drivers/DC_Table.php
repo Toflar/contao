@@ -1974,7 +1974,7 @@ class DC_Table extends DataContainer implements ListableDataContainerInterface, 
 
 					$this->strField = $vv;
 					$this->strInputName = $vv;
-					$this->varValue = $currentRecord[$vv];
+					$this->varValue = $currentRecord[$vv] ?? null;
 
 					// Convert CSV fields (see #2890)
 					if (($GLOBALS['TL_DCA'][$this->strTable]['fields'][$this->strField]['eval']['multiple'] ?? null) && isset($GLOBALS['TL_DCA'][$this->strTable]['fields'][$this->strField]['eval']['csv']))
@@ -2419,9 +2419,9 @@ class DC_Table extends DataContainer implements ListableDataContainerInterface, 
 							$this->varValue = \is_array($GLOBALS['TL_DCA'][$this->strTable]['fields'][$this->strField]['default']) ? serialize($GLOBALS['TL_DCA'][$this->strTable]['fields'][$this->strField]['default']) : $GLOBALS['TL_DCA'][$this->strTable]['fields'][$this->strField]['default'];
 						}
 
-						if ($currentRecord[$v] !== false)
+						if (($currentRecord[$v] ?? null) !== false)
 						{
-							$this->varValue = $currentRecord[$v];
+							$this->varValue = $currentRecord[$v] ?? null;
 						}
 
 						// Convert CSV fields (see #2890)
@@ -3283,7 +3283,7 @@ class DC_Table extends DataContainer implements ListableDataContainerInterface, 
 			{
 				foreach ($GLOBALS['TL_DCA'][$this->strTable]['palettes']['__selector__'] as $name)
 				{
-					$trigger = $currentRow[$name];
+					$trigger = $currentRow[$name] ?? null;
 
 					// Overwrite the trigger
 					if (Input::post('FORM_SUBMIT') == $this->strTable)
