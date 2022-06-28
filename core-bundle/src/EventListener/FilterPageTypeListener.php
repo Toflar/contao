@@ -34,7 +34,7 @@ class FilterPageTypeListener
         }
 
         // The first level can only have root pages (see #6360)
-        if (!($currentRecord['pid'] ?? null)) {
+        if (0 === (int) $currentRecord['pid']) {
             $event->setOptions(['root']);
 
             return;
