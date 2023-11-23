@@ -20,22 +20,21 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * @internal
  */
-class RedirectController extends SymfonyRedirectController
+class RedirectController
 {
+    public function __construct(private readonly SymfonyRedirectController $controller)
+    {
+    }
+
     public function urlRedirectAction(Request $request, string $path, bool $permanent = false, string $scheme = null, int $httpPort = null, int $httpsPort = null, bool $keepRequestMethod = false): Response
     {
-        $response = parent::urlRedirectAction($request, $path, $permanent, $scheme, $httpPort, $httpsPort, $keepRequestMethod);
+        $response = $this->controller->urlRedirectAction($request, $path, $permanent, $scheme, $httpPort, $httpsPort, $keepRequestMethod);
         $pageModel = $request->attributes->get('pageModel');
 
-        if (
-            $pageModel instanceof PageModel
-            && !$pageModel->useSSL
-            && $request->isSecure()
-        ) {
+        if ($pageModel instanceof PageModel && !$pageModel->useSSL && $request->isSecure()) {
             $response->headers->set('Strict-Transport-Security', 'max-age=0');
         }
 
         return $response;
     }
-
 }
