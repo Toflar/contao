@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Contao\CoreBundle\Tests\Image\Studio;
 
 use Contao\Config;
+use Contao\CoreBundle\Event\FigureFromUrlEvent;
 use Contao\CoreBundle\Event\FileMetadataEvent;
 use Contao\CoreBundle\Exception\InvalidResourceException;
 use Contao\CoreBundle\File\Metadata;
@@ -428,9 +429,26 @@ class FigureBuilderTest extends TestCase
             Validator::class => $validatorAdapter,
         ]);
 
-        $studio = $this->mockStudioForImage($absoluteFilePath);
+        if (\in_array($identifier, ['https://domain.com', 'ftp://domain.com'], true)) {
+            $eventDispatcher = new EventDispatcher();
+            $studio = $this->mockStudioForImage($absoluteFilePath, null, null, false);
 
-        $this->getFigureBuilder($studio, $framework)->from($identifier)->build();
+            $eventDispatcher->addListener(
+                FigureFromUrlEvent::class,
+                function (FigureFromUrlEvent $event): void {
+                    if (\in_array((string) $event->getUri(), ['https://domain.com', 'ftp://domain.com'], true)) {
+                        $event->setFigure(new Figure($this->createMock(ImageResult::class)));
+                    }
+
+                    $this->fail('This event with this URI was not supposed to be called.');
+                },
+            );
+        } else {
+            $eventDispatcher = null;
+            $studio = $this->mockStudioForImage($absoluteFilePath);
+        }
+
+        $this->getFigureBuilder($studio, $framework, $eventDispatcher)->from($identifier)->build();
     }
 
     public function testFromNullFails(): void
@@ -545,6 +563,10 @@ class FigureBuilderTest extends TestCase
         yield 'relative path' => [$relativeFilePath];
 
         yield 'absolute path' => [$absoluteFilePath];
+
+        yield 'https url' => ['https://domain.com'];
+
+        yield 'ftp url' => ['ftp://domain.com'];
     }
 
     public function testBuildIfResourceExistsHandlesFilesThatCannotBeProcessed(): void
@@ -1440,13 +1462,13 @@ class FigureBuilderTest extends TestCase
         return $builder->build();
     }
 
-    private function mockStudioForImage(string $expectedFilePath, string|null $expectedSizeConfiguration = null, ResizeOptions|null $resizeOptions = null): Studio&MockObject
+    private function mockStudioForImage(string $expectedFilePath, string|null $expectedSizeConfiguration = null, ResizeOptions|null $resizeOptions = null, bool $expectsCreateImage = true): Studio&MockObject
     {
         $image = $this->createMock(ImageResult::class);
 
         $studio = $this->createMock(Studio::class);
         $studio
-            ->expects($this->once())
+            ->expects($expectsCreateImage ? $this->once() : $this->never())
             ->method('createImage')
             ->with($expectedFilePath, $expectedSizeConfiguration, $resizeOptions)
             ->willReturn($image)

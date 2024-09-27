@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Contao\CoreBundle\Image\Studio;
 
+use Contao\CoreBundle\Event\FigureFromUrlEvent;
 use Contao\CoreBundle\Event\FileMetadataEvent;
 use Contao\CoreBundle\Exception\InvalidResourceException;
 use Contao\CoreBundle\File\Metadata;
@@ -50,6 +51,11 @@ class FigureBuilder
      * The resource's absolute file path.
      */
     private string|null $filePath = null;
+
+    /**
+     * The resource's figure.
+     */
+    private Figure|null $figure = null;
 
     /**
      * The resource's file model if applicable.
@@ -254,6 +260,16 @@ class FigureBuilder
         $this->lastException = null;
 
         $uri = new Uri($url);
+
+        $event = new FigureFromUrlEvent($uri);
+        $this->locator->get('event_dispatcher')->dispatch($event);
+
+        if ($event->getFigure() instanceof Figure) {
+            $this->figure = $event->getFigure();
+
+            return $this;
+        }
+
         $path = null;
 
         foreach ($baseUrls as $baseUrl) {
@@ -314,8 +330,14 @@ class FigureBuilder
             return $this->fromImage($identifier);
         }
 
-        if (\is_string($identifier) && $this->getValidatorAdapter()->isUuid($identifier)) {
-            return $this->fromUuid($identifier);
+        if (\is_string($identifier)) {
+            if ($this->getValidatorAdapter()->isUuid($identifier)) {
+                return $this->fromUuid($identifier);
+            }
+
+            if (filter_var($identifier, FILTER_VALIDATE_URL)) {
+                return $this->fromUrl($identifier);
+            }
         }
 
         if (is_numeric($identifier)) {
@@ -634,6 +656,10 @@ class FigureBuilder
      */
     private function doBuild(): Figure
     {
+        if ($this->figure instanceof Figure) {
+            return $this->figure;
+        }
+
         if (null === $this->filePath) {
             throw new \LogicException('You need to set a resource before building the result.');
         }
