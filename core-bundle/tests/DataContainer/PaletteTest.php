@@ -20,7 +20,7 @@ class PaletteTest extends TestCase
     public function testPaletteHandling(): void
     {
         $paletteString = '{config_legend},foo,bar;{custom_legend},baz';
-        $palette = Palette::fromString($paletteString);
+        $palette = new Palette($paletteString);
 
         $this->assertTrue($palette->hasLegend('config_legend'));
         $this->assertTrue($palette->hasLegend('custom_legend'));
@@ -33,6 +33,5 @@ class PaletteTest extends TestCase
         $this->assertFalse($palette->hasField('qux'));
 
         $this->assertSame($paletteString, (string) $palette);
-        $this->assertSame($paletteString, $palette->toString());
     }
 }
