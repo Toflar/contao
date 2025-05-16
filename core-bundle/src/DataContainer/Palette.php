@@ -28,6 +28,11 @@ class Palette implements \Stringable
         return $this->implode();
     }
 
+    public function toString(): string
+    {
+        return $this->implode();
+    }
+
     public function hasLegend(string $legend): bool
     {
         return isset($this->config[$legend]);

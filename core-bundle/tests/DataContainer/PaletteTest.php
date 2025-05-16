@@ -33,5 +33,6 @@ class PaletteTest extends TestCase
         $this->assertFalse($palette->hasField('qux'));
 
         $this->assertSame($paletteString, (string) $palette);
+        $this->assertSame($paletteString, $palette->toString());
     }
 }
