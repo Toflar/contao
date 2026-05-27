@@ -4,6 +4,7 @@ import AccessibleMenu from 'accessible-menu';
 let menus = [];
 
 export default class OperationsMenuController extends Controller {
+    #onPointerUp;
     #onMenuExpand = null;
     #contextMenuEventPosition = null;
     #operationsPromise = null;
@@ -45,6 +46,10 @@ export default class OperationsMenuController extends Controller {
     }
 
     controllerTargetConnected(el) {
+        // Native pointerup listener to handle long-press cases where the browser suppresses click and the accessible menu does not register open states correctly
+        this.#onPointerUp = () => el.click();
+        el.addEventListener('pointerup', this.#onPointerUp);
+
         this.#onMenuExpand = () => {
             for (const menu of menus) {
                 if (menu !== this.$menu && menu.elements.submenuToggles[0].isOpen) {
@@ -59,6 +64,7 @@ export default class OperationsMenuController extends Controller {
     }
 
     controllerTargetDisconnected(el) {
+        el.removeEventListener('pointerup', this.#onPointerUp);
         el.removeEventListener('accessibleMenuExpand', this.#onMenuExpand);
         this.#onMenuExpand = null;
     }
