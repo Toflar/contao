@@ -4233,6 +4233,8 @@ class DC_Table extends DataContainer implements ListableDataContainerInterface, 
 
 		$objOrderBy = $objOrderByStmt->execute(...$arrValues);
 		$records = array();
+		$hasChildRecordCallback = \is_array($GLOBALS['TL_DCA'][$this->strTable]['list']['sorting']['child_record_callback'] ?? null) || \is_callable($GLOBALS['TL_DCA'][$this->strTable]['list']['sorting']['child_record_callback'] ?? null);
+
 
 		if ($objOrderBy->numRows)
 		{
@@ -4343,14 +4345,8 @@ class DC_Table extends DataContainer implements ListableDataContainerInterface, 
 						}
 
 						// Backwards compatibility: Add a drag handle in case the child_record_callback is used (to be removed in Contao 6)
-						if (
-							$blnIsSortable
-							&& (
-								\is_array($GLOBALS['TL_DCA'][$this->strTable]['list']['sorting']['child_record_callback'] ?? null)
-								|| \is_callable($GLOBALS['TL_DCA'][$this->strTable]['list']['sorting']['child_record_callback'] ?? null)
-							)
-							&& $security->isGranted(ContaoCorePermissions::DC_PREFIX . $this->strTable, new UpdateAction($this->strTable, $row[$i]))
-						) {
+						if ($hasChildRecordCallback && $blnIsSortable && $security->isGranted(ContaoCorePermissions::DC_PREFIX . $this->strTable, new UpdateAction($this->strTable, $row[$i])))
+						{
 							$recordOperations->append(array('primary' => true, 'html'=>'<button type="button" class="drag-handle" data-action="keydown->contao--sortable#move" style="display:none">' . Image::getHtml('drag.svg', \sprintf(\is_array($labelCut) ? $labelCut[1] : $labelCut, $row[$i]['id'])) . '</button>'));
 						}
 					}
@@ -4413,7 +4409,7 @@ class DC_Table extends DataContainer implements ListableDataContainerInterface, 
 		$parameters['message'] = Message::generate();
 		$parameters['global_operations'] = $operations;
 		$parameters['table_name'] = $this->strTable;
-		$parameters['primary_only'] = $this->shouldRenderPrimaryOperationsOnly();
+		$parameters['primary_only'] = !$hasChildRecordCallback && $this->shouldRenderPrimaryOperationsOnly();
 
 		return $this->render('view/parent', $parameters);
 	}
