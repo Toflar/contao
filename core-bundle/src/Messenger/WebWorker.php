@@ -203,12 +203,12 @@ class WebWorker
     {
         $request = $event->getRequest();
 
-        // The worker is enabled explicitly
+        // The feature is enabled explicitly
         if (true === $request->attributes->get(self::REQUEST_ATTRIBUTE_ENABLE)) {
             return true;
         }
 
-        // Automatically enable the worker for Contao requests unless it is disabled explicitly
+        // Automatically enable the feature for Contao requests unless it is disabled explicitly
         return $this->scopeMatcher->isContaoMainRequest($event)
             && false !== $request->attributes->get(self::REQUEST_ATTRIBUTE_ENABLE);
     }
