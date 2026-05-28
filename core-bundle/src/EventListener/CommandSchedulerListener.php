@@ -48,21 +48,7 @@ class CommandSchedulerListener
 
     private function shouldRunCron(TerminateEvent $event): bool
     {
-        $request = $event->getRequest();
-        $pathInfo = $request->getPathInfo();
-
-        // Skip the listener upon fragment URLs
-        if (preg_match('~(?:^|/)'.preg_quote($this->fragmentPath, '~').'/~', $pathInfo)) {
-            return false;
-        }
-
-        if (
-            (
-                !$this->scopeMatcher->isContaoMainRequest($event)
-                && true !== $request->attributes->get(self::REQUEST_ATTRIBUTE_ENABLE)
-            )
-            || false === $request->attributes->get(self::REQUEST_ATTRIBUTE_ENABLE)
-        ) {
+        if (!$this->isEnabled($event)) {
             return false;
         }
 
@@ -76,6 +62,27 @@ class CommandSchedulerListener
         }
 
         return true;
+    }
+
+    private function isEnabled(TerminateEvent $event): bool
+    {
+        $request = $event->getRequest();
+        $pathInfo = $request->getPathInfo();
+
+        // Skip the listener upon fragment URLs
+        if (preg_match('~(?:^|/)'.preg_quote($this->fragmentPath, '~').'/~', $pathInfo)) {
+            return false;
+        }
+
+        // The listener is enabled explicitly
+        if (true === $request->attributes->get(self::REQUEST_ATTRIBUTE_ENABLE)) {
+            return true;
+        }
+
+        // Automatically enable the listener for Contao requests unless it is
+        // disabled explicitly
+        return $this->scopeMatcher->isContaoMainRequest($event)
+            && false !== $request->attributes->get(self::REQUEST_ATTRIBUTE_ENABLE);
     }
 
     /**
