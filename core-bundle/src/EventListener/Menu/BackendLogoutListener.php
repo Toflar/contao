@@ -18,9 +18,9 @@ use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Core\Authentication\Token\SwitchUserToken;
+use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Http\Firewall\SwitchUserListener;
 use Symfony\Component\Security\Http\Logout\LogoutUrlGenerator as BaseLogoutUrlGenerator;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * @internal
@@ -32,7 +32,6 @@ class BackendLogoutListener
         private readonly Security $security,
         private readonly RouterInterface $router,
         private readonly BaseLogoutUrlGenerator $urlGenerator,
-        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -48,40 +47,27 @@ class BackendLogoutListener
             return;
         }
 
+        $token = $this->security->getToken();
+        $switchedFrom = $token instanceof SwitchUserToken ? $token->getOriginalToken()->getUserIdentifier() : null;
+
         $logout = $event
             ->getFactory()
             ->createItem('logout')
-            ->setLabel($this->getLogoutLabel())
-            ->setUri($this->getLogoutUrl())
+            ->setLabel($switchedFrom ? 'MSC.switchBT' : 'MSC.logoutBT')
+            ->setUri($this->getLogoutUrl($token))
             ->setLinkAttribute('accesskey', 'q')
             ->setLinkAttribute('data-turbo-prefetch', 'false')
-            ->setExtra(BackendMenuBuilder::EXTRA_ICON, 'logout')
+            ->setExtra(BackendMenuBuilder::EXTRA_ICON, 'exit.svg')
             ->setExtra(BackendMenuBuilder::EXTRA_HAS_DIVIDER, true)
-            ->setExtra('translation_domain', false)
+            ->setExtra('translation_params', array_filter([$switchedFrom]))
+            ->setExtra('translation_domain', 'contao_default')
         ;
 
         $submenu->addChild($logout);
     }
 
-    private function getLogoutLabel(): string
+    private function getLogoutUrl(TokenInterface|null $token): string
     {
-        $token = $this->security->getToken();
-
-        if ($token instanceof SwitchUserToken) {
-            return $this->translator->trans(
-                'MSC.switchBT',
-                [$token->getOriginalToken()->getUserIdentifier()],
-                'contao_default',
-            );
-        }
-
-        return $this->translator->trans('MSC.logoutBT', [], 'contao_default');
-    }
-
-    private function getLogoutUrl(): string
-    {
-        $token = $this->security->getToken();
-
         if (!$token instanceof SwitchUserToken) {
             return $this->urlGenerator->getLogoutUrl();
         }
