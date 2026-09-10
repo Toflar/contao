@@ -159,8 +159,6 @@ class BackendHeaderListenerTest extends TestCase
         $this->assertStringContainsString('class="icon-profile_small"', $html);
         $this->assertStringContainsString('class="icon-alert"', $html);
         $this->assertStringContainsString('<sup>1</sup>', $html);
-
-        // The manual icon replaces its label, the preview icon only does so on small screens
         $this->assertStringContainsString('<span class="label invisible">', $html);
         $this->assertStringNotContainsString('d-md-none', $html);
     }
