@@ -18,7 +18,6 @@ use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Core\Authentication\Token\SwitchUserToken;
-use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Http\Firewall\SwitchUserListener;
 use Symfony\Component\Security\Http\Logout\LogoutUrlGenerator as BaseLogoutUrlGenerator;
 
@@ -48,30 +47,26 @@ class BackendLogoutListener
         }
 
         $token = $this->security->getToken();
-        $switchedFrom = $token instanceof SwitchUserToken ? $token->getOriginalToken()->getUserIdentifier() : null;
+        $isSwitched = $token instanceof SwitchUserToken;
 
         $logout = $event
             ->getFactory()
             ->createItem('logout')
-            ->setLabel($switchedFrom ? 'MSC.switchBT' : 'MSC.logoutBT')
-            ->setUri($this->getLogoutUrl($token))
+            ->setLabel($isSwitched ? 'MSC.switchBT' : 'MSC.logoutBT')
+            ->setUri($isSwitched ? $this->getLogoutUrl() : $this->urlGenerator->getLogoutUrl())
             ->setLinkAttribute('accesskey', 'q')
             ->setLinkAttribute('data-turbo-prefetch', 'false')
             ->setExtra(BackendMenuBuilder::EXTRA_ICON, 'exit.svg')
             ->setExtra(BackendMenuBuilder::EXTRA_HAS_DIVIDER, true)
-            ->setExtra('translation_params', array_filter([$switchedFrom]))
+            ->setExtra('translation_params', $isSwitched ? [$token->getOriginalToken()->getUserIdentifier()] : [])
             ->setExtra('translation_domain', 'contao_default')
         ;
 
         $submenu->addChild($logout);
     }
 
-    private function getLogoutUrl(TokenInterface|null $token): string
+    private function getLogoutUrl(): string
     {
-        if (!$token instanceof SwitchUserToken) {
-            return $this->urlGenerator->getLogoutUrl();
-        }
-
         $params = ['do' => 'user', '_switch_user' => SwitchUserListener::EXIT_VALUE];
 
         return $this->router->generate('contao_backend', $params);
