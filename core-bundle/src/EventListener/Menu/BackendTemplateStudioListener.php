@@ -14,7 +14,6 @@ namespace Contao\CoreBundle\EventListener\Menu;
 
 use Contao\CoreBundle\Controller\Backend\TemplateStudioController;
 use Contao\CoreBundle\Event\MenuEvent;
-use Contao\CoreBundle\Menu\BackendMenuBuilder;
 use Knp\Menu\Util\MenuManipulator;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;

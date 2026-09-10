@@ -22,7 +22,7 @@
 
     <span{{ attrs(item.labelAttributes) }}>
         {% if item.extra('contao_backend_menu_content_template') %}
-            {{ include(item.extra('contao_backend_menu_content_template'), {label: label}) }}
+            {{ include(item.extra('contao_backend_menu_content_template'), {label}) }}
         {% else %}
             {{ block('label') }}
         {% endif %}
