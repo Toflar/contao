@@ -16,14 +16,17 @@ use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\HttpOperation;
 use ApiPlatform\Metadata\Resource\Factory\ResourceMetadataCollectionFactoryInterface;
 use Contao\ApiBundle\Dto\DataContainerRecord;
+use Contao\ApiBundle\Dto\VirtualFilesystemItem;
 use Contao\ApiBundle\Widget\RelationAwareWidgetConverterInterface;
 use Contao\ApiBundle\Widget\WidgetConverterRegistry;
 use Contao\CoreBundle\DataContainer\ForeignKeyParser;
 use Contao\DataContainer as ContaoDataContainer;
+use Contao\StringUtil;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\Routing\Exception\ExceptionInterface as RoutingExceptionInterface;
 use Symfony\Component\Routing\RouterInterface;
+use Symfony\Component\Uid\Uuid;
 
 final class DataContainerRelationResolver
 {
@@ -31,6 +34,8 @@ final class DataContainerRelationResolver
      * @var array<string, list<HttpOperation>>|null
      */
     private array|null $readOperations = null;
+
+    private Get|null $fileReadOperation = null;
 
     public function __construct(
         private readonly Connection $connection,
@@ -49,6 +54,10 @@ final class DataContainerRelationResolver
     private function getRelation(DataContainerFieldContext $field, array $row = []): DataContainerRelationDefinition|null
     {
         $relation = $this->getConfiguredRelation($field->config) ?? $this->getImplicitRelation($field, $row);
+
+        if ($relation && $this->isFileRelation($relation)) {
+            return $this->getFileReadOperation() ? $relation : null;
+        }
 
         return $relation && [] !== ($this->getReadOperations()[$relation->table] ?? []) ? $relation : null;
     }
@@ -125,6 +134,14 @@ final class DataContainerRelationResolver
 
     private function createIri(DataContainerRelationDefinition $relation, mixed $identifier): string|null
     {
+        if ($this->isFileRelation($relation)) {
+            $operation = $this->getFileReadOperation();
+
+            return $operation && \is_string($identifier) && Uuid::isValid($identifier)
+                ? $this->router->generate($operation->getRouteName() ?? $operation->getName(), ['pathOrUuid' => $identifier])
+                : null;
+        }
+
         $operations = $this->getReadOperations()[$relation->table] ?? [];
 
         if ('id' === $relation->field) {
@@ -162,6 +179,10 @@ final class DataContainerRelationResolver
             throw new UnprocessableEntityHttpException('The relation IRI does not match an API resource.');
         }
 
+        if ($this->isFileRelation($relation)) {
+            return $this->getFileIdentifier($parameters);
+        }
+
         foreach ($this->getReadOperations()[$relation->table] ?? [] as $operation) {
             if (($operation->getRouteName() ?? $operation->getName()) !== ($parameters['_route'] ?? null)) {
                 continue;
@@ -177,6 +198,51 @@ final class DataContainerRelationResolver
         }
 
         throw new UnprocessableEntityHttpException('The relation IRI points to an unexpected API resource.');
+    }
+
+    private function isFileRelation(DataContainerRelationDefinition $relation): bool
+    {
+        return 'tl_files' === $relation->table && 'uuid' === $relation->field;
+    }
+
+    private function getFileReadOperation(): Get|null
+    {
+        if ($this->fileReadOperation) {
+            return $this->fileReadOperation;
+        }
+
+        foreach ($this->metadataFactory->create(VirtualFilesystemItem::class) as $resource) {
+            foreach ($resource->getOperations() ?? [] as $operation) {
+                if ($operation instanceof Get) {
+                    return $this->fileReadOperation = $operation;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function getFileIdentifier(array $parameters): string
+    {
+        $operation = $this->getFileReadOperation();
+
+        if (!$operation || ($operation->getRouteName() ?? $operation->getName()) !== ($parameters['_route'] ?? null)) {
+            throw new UnprocessableEntityHttpException('The relation IRI points to an unexpected API resource.');
+        }
+
+        $path = $parameters['pathOrUuid'] ?? $parameters['path'] ?? null;
+
+        if (\is_string($path) && Uuid::isValid($path)) {
+            return $path;
+        }
+
+        $uuid = \is_string($path) ? ($this->findRow('tl_files', 'path', $path)['uuid'] ?? null) : null;
+
+        if (!\is_string($uuid) || 16 !== \strlen($uuid)) {
+            throw new UnprocessableEntityHttpException('The relation IRI does not identify a registered file or directory.');
+        }
+
+        return StringUtil::binToUuid($uuid);
     }
 
     /**

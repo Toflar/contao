@@ -257,7 +257,7 @@ final class DataContainerSchemaFactory
             return $schema;
         }
 
-        unset($schema['enum'], $schema['default'], $schema['maxLength'], $schema['minLength'], $schema['pattern']);
+        unset($schema['enum'], $schema['default'], $schema['maxLength'], $schema['minLength'], $schema['pattern'], $schema['format']);
 
         return $referenceSchema + $schema;
     }

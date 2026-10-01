@@ -5,6 +5,7 @@ services:
         arguments:
             - '@contao_api.widget.converter_registry'
             - '@contao_api.schema.data_container_factory'
+            - '@contao_api.data_container.relation_resolver'
         tags:
             - { name: contao.api.widget_converter, priority: -100 }
 
